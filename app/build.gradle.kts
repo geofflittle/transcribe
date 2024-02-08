@@ -8,12 +8,17 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     application
+    id("io.freefair.lombok") version "8.4"
 }
 
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
 }
+
+// tasks.named<JavaExec>("run") {
+//     jvmArgs = listOf("-Djava.util.logging.config.file=/Users/geofflittle/code/transcribe/app/src/main/resources/logging.properties")
+// }
 
 dependencies {
     // Use JUnit Jupiter for testing.
@@ -23,6 +28,15 @@ dependencies {
 
     // This dependency is used by the application.
     implementation(libs.guava)
+
+    implementation("software.amazon.awssdk:apache-client:2.21.1")
+    implementation(platform("software.amazon.awssdk:bom:2.21.1"))
+    implementation("software.amazon.awssdk:s3")
+    implementation("software.amazon.awssdk:transcribe")
+    implementation("commons-cli:commons-cli:1.6.0")
+    implementation("com.google.inject:guice:7.0.0")
+    implementation("org.slf4j:slf4j-api:2.0.12")
+    implementation("org.slf4j:slf4j-simple:2.0.12")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "App",
+            "request": "launch",
+            "mainClass": "transcribe.App",
+            "projectName": "app",
+            "vmArgs": "-Djava.util.logging.config.file=src/main/resources/logging.properties",
+            "args": "-u src/main/resources"
+        }
+    ]
+}
