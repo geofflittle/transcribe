@@ -6,7 +6,7 @@ package transcribe;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.UUID;
+import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -21,59 +21,13 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 
 import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.http.SdkHttpClient;
-import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
-import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
-import software.amazon.awssdk.services.transcribe.TranscribeClient;
-import software.amazon.awssdk.services.transcribe.model.GetTranscriptionJobRequest;
-import software.amazon.awssdk.services.transcribe.model.GetTranscriptionJobResponse;
-import software.amazon.awssdk.services.transcribe.model.LanguageCode;
-import software.amazon.awssdk.services.transcribe.model.Media;
-import software.amazon.awssdk.services.transcribe.model.MediaFormat;
-import software.amazon.awssdk.services.transcribe.model.StartTranscriptionJobRequest;
-import software.amazon.awssdk.services.transcribe.model.StartTranscriptionJobResponse;
 
 // TODO: Get app to read logging.properties file
 @Slf4j
 public class App {
-
-    public void scratch() {
-        SdkHttpClient httpClient = ApacheHttpClient.builder().build();
-        S3Client s3 = S3Client.builder()
-                .httpClient(httpClient)
-                .build();
-        ListBucketsResponse listBuckets = s3.listBuckets();
-        System.out.println(listBuckets);
-
-        TranscribeClient transcribe = TranscribeClient.builder()
-                .httpClient(httpClient)
-                .build();
-
-        UUID uuid = UUID.randomUUID();
-        String jobName = uuid.toString();
-        String mediaUri = "s3://your-bucket-name/your-file.mp3";
-        String outputBucketName = "your-output-bucket-name";
-
-        StartTranscriptionJobRequest request = StartTranscriptionJobRequest.builder()
-                .transcriptionJobName(jobName)
-                .media(Media.builder().mediaFileUri(mediaUri).build())
-                .mediaFormat(MediaFormat.MP3)
-                .languageCode(LanguageCode.EN_US)
-                .outputBucketName(outputBucketName)
-                .build();
-
-        StartTranscriptionJobResponse response = transcribe.startTranscriptionJob(request);
-        System.out.println(response);
-
-        GetTranscriptionJobResponse jobResponse = transcribe
-                .getTranscriptionJob(GetTranscriptionJobRequest.builder()
-                        .transcriptionJobName(jobName)
-                        .build());
-        System.out.println("Job Status: " + jobResponse.transcriptionJob().transcriptionJobStatus());
-    }
 
     public static String getS3Bucket(S3Client s3, String bucketName) {
         CreateBucketRequest createBucketRequest = CreateBucketRequest.builder()
@@ -88,19 +42,18 @@ public class App {
         Options options = new Options();
         options.addOption(Option.builder("u")
                 .argName("uploadDir")
+                .optionalArg(false)
                 .hasArg()
                 .desc("Directory of files to upload")
                 .build());
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
         String uploadDir = cmd.getOptionValue("u");
-        if (uploadDir != null) {
-            log.info("Has upload dir " + uploadDir);
-            DirectoryUploader uploader = injector.getInstance(DirectoryUploader.class);
-            String bucketName = injector.getInstance(Key.get(String.class, Names.named(AppModule.S3_BUCKET_NAME_NAME)));
-            uploader.upload(new File(uploadDir), bucketName);
-            return;
-        }
-        log.info("No upload dir");
+        log.info("Has upload dir " + uploadDir);
+        DirectoryUploader uploader = injector.getInstance(DirectoryUploader.class);
+        String bucketName = injector.getInstance(Key.get(String.class, Names.named(AppModule.S3_BUCKET_NAME_NAME)));
+        List<String> s3Uris = uploader.upload(new File(uploadDir), bucketName);
+        TranscriptionProcessor processor = injector.getInstance(TranscriptionProcessor.class);
+        processor.process(s3Uris);
     }
 }

@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.google.inject.Inject;
 
@@ -49,7 +51,18 @@ public class DirectoryUploader {
         return true;
     }
 
-    public void upload(File directoryFile, String s3BucketName) throws URISyntaxException, IOException {
+    private String putObject(String s3BucketName, File file) {
+        log.info("Will put obj request {}", file);
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(s3BucketName)
+                .key(file.getName())
+                .build();
+        s3.putObject(putObjectRequest, file.toPath());
+        log.info("Did put obj request {}", file);
+        return String.format("s3://%s/%s", s3BucketName, file.getName());
+    }
+
+    public List<String> upload(File directoryFile, String s3BucketName) throws URISyntaxException, IOException {
         log.info("Uploading " + directoryFile + " to " + s3BucketName);
         if (!directoryFile.exists() || !directoryFile.isDirectory()) {
             throw new RuntimeException("No directory with path " + directoryFile);
@@ -58,15 +71,9 @@ public class DirectoryUploader {
             log.info("No head bucket {}", s3BucketName);
             createBucket(s3BucketName);
         }
-        Arrays.stream(directoryFile.listFiles())
-                .forEach(file -> {
-                    log.info("Will put obj request {}", file);
-                    PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                            .bucket(s3BucketName)
-                            .key(file.getName())
-                            .build();
-                    s3.putObject(putObjectRequest, file.toPath());
-                    log.info("Did put obj request {}", file);
-                });
+        List<String> s3Uris = Arrays.stream(directoryFile.listFiles())
+                .map(file -> putObject(s3BucketName, file))
+                .collect(Collectors.toList());
+        return s3Uris;
     }
 }

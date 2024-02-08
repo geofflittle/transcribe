@@ -8,6 +8,7 @@ import com.google.inject.name.Named;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.transcribe.TranscribeClient;
 
 public class AppModule extends AbstractModule {
 
@@ -33,6 +34,14 @@ public class AppModule extends AbstractModule {
     @Singleton
     public S3Client s3Client(SdkHttpClient httpClient) {
         return S3Client.builder()
+                .httpClient(httpClient)
+                .build();
+    }
+
+    @Provides
+    @Singleton
+    public TranscribeClient transcribeClient(SdkHttpClient httpClient) {
+        return TranscribeClient.builder()
                 .httpClient(httpClient)
                 .build();
     }
