@@ -3,10 +3,9 @@
  */
 package transcribe;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -15,45 +14,49 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import com.google.inject.Binding;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.name.Names;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
-import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 
 // TODO: Get app to read logging.properties file
 @Slf4j
 public class App {
 
-    public static String getS3Bucket(S3Client s3, String bucketName) {
-        CreateBucketRequest createBucketRequest = CreateBucketRequest.builder()
-                .bucket(bucketName)
-                .build();
-        CreateBucketResponse createBucketResponse = s3.createBucket(createBucketRequest);
-        return createBucketResponse.location();
+    @SneakyThrows
+    private static CommandLine getParsedArgs(String[] args) {
+        Options options = new Options();
+        options.addOption(Option.builder("i")
+                .argName("inputDir")
+                .desc("Directory of files to upload")
+                .optionalArg(false)
+                .hasArg()
+                .build());
+        options.addOption(Option.builder("o")
+                .argName("outputDir")
+                .desc("Directory of files to upload")
+                .optionalArg(false)
+                .hasArg()
+                .build());
+        CommandLineParser parser = new DefaultParser();
+        return parser.parse(options, args);
     }
 
     public static void main(String[] args) throws ParseException, URISyntaxException, IOException {
         Injector injector = Guice.createInjector(new AppModule());
-        Options options = new Options();
-        options.addOption(Option.builder("u")
-                .argName("uploadDir")
-                .optionalArg(false)
-                .hasArg()
-                .desc("Directory of files to upload")
-                .build());
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args);
-        String uploadDir = cmd.getOptionValue("u");
-        log.info("Has upload dir " + uploadDir);
-        DirectoryUploader uploader = injector.getInstance(DirectoryUploader.class);
-        String bucketName = injector.getInstance(Key.get(String.class, Names.named(AppModule.S3_BUCKET_NAME_NAME)));
-        List<String> s3Uris = uploader.upload(new File(uploadDir), bucketName);
-        TranscriptionProcessor processor = injector.getInstance(TranscriptionProcessor.class);
-        processor.process(s3Uris);
+        Map<Key<?>, Binding<?>> bindings = injector.getAllBindings();
+        for (Map.Entry<Key<?>, Binding<?>> entry : bindings.entrySet()) {
+            System.out.println(entry.getKey() + " : " + entry.getValue());
+        }
+        CommandLine cmd = getParsedArgs(args);
+        String inputDir = cmd.getOptionValue("i");
+        String outputDir = cmd.getOptionValue("o");
+        log.info("Processing with input dir {} and output dir {}", inputDir, outputDir);
+        TranscribeProcessor processor = injector.getInstance(TranscribeProcessor.class);
+        processor.process(inputDir, outputDir);
+        log.info("Processed input dir {} into output dir {}", inputDir, outputDir);
     }
 }
