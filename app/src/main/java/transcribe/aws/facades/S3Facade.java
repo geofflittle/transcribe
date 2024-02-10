@@ -1,4 +1,4 @@
-package transcribe;
+package transcribe.aws.facades;
 
 import java.io.File;
 
@@ -16,6 +16,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import transcribe.aws.model.S3ObjectMetadata;
 
 @Slf4j
 @Value
@@ -51,17 +52,17 @@ public class S3Facade {
         return true;
     }
 
-    public String putObject(String bucket, String key, File file) {
+    public S3ObjectMetadata putObject(String bucket, String key, File file) {
         log.info("Will put obj {} to {}/{}", file, bucket, key);
         PutObjectRequest request = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
                 .build();
         s3.putObject(request, file.toPath());
-        log.info("Did put obj {} to {}/{}", file, bucket, key);
-        String s3Uri = String.format("s3://%s/%s", bucket, key);
-        log.info("S3 URI {}", s3Uri);
-        return s3Uri;
+        return S3ObjectMetadata.builder()
+                .bucket(bucket)
+                .key(key)
+                .build();
     }
 
     public ResponseInputStream<GetObjectResponse> getObject(String bucket, String key) {

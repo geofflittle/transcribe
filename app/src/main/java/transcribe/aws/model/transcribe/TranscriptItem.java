@@ -1,4 +1,4 @@
-package transcribe.model;
+package transcribe.aws.model.transcribe;
 
 import java.util.List;
 
@@ -9,9 +9,9 @@ import lombok.extern.jackson.Jacksonized;
 @Data
 @Builder
 @Jacksonized
-public class AwsTranscriptItem {
+public class TranscriptItem {
     private final String type;
-    private final List<AwsTranscriptAlternative> alternatives;
+    private final List<TranscriptAlternative> alternatives;
     private final String start_time;
     private final String end_time;
 }

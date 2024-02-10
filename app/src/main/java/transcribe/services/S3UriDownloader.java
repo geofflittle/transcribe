@@ -1,4 +1,4 @@
-package transcribe;
+package transcribe.services;
 
 import java.net.URI;
 import java.nio.file.Files;
@@ -14,6 +14,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import transcribe.aws.facades.S3Facade;
 
 @Slf4j
 @Value

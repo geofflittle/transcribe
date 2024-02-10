@@ -3,21 +3,19 @@
  */
 package transcribe;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import transcribe.config.AppModule;
+import transcribe.services.TranscriptProcessor;
 
 // TODO: Get app to read logging.properties file
 @Slf4j
@@ -27,47 +25,49 @@ public class App {
     private static CommandLine getParsedArgs(String[] args) {
         Options options = new Options();
         options.addOption(Option.builder("i")
-                .argName("inputDir")
-                .desc("Directory of files to upload")
-                .optionalArg(true)
+                .argName("inputAudioFile")
+                .desc("Input audio file to transcribe")
+                .optionalArg(false)
                 .hasArg()
                 .build());
         options.addOption(Option.builder("o")
                 .argName("outputDir")
-                .desc("Directory of files to upload")
-                .optionalArg(true)
+                .desc("Directory for output files")
+                .optionalArg(false)
                 .hasArg()
                 .build());
         options.addOption(Option.builder("t")
-                .argName("transcriptDir")
-                .desc("Directory of transcript .txt files")
-                .optionalArg(true)
+                .argName("documentTitle")
+                .desc("Output transcript document title")
+                .optionalArg(false)
                 .hasArg()
                 .build());
+        options.addOption(Option.builder("c")
+                .argName("caseName")
+                .desc("Output transcript case name")
+                .optionalArg(false)
+                .hasArg()
+                .build());
+        // options.addOption(Option.builder("t")
+        // .argName("transcriptDir")
+        // .desc("Directory of transcript .txt files")
+        // .optionalArg(true)
+        // .hasArg()
+        // .build());
         CommandLineParser parser = new DefaultParser();
         return parser.parse(options, args);
     }
 
-    public static void main(String[] args) throws ParseException, URISyntaxException, IOException {
+    public static void main(String[] args) {
         Injector injector = Guice.createInjector(new AppModule());
         CommandLine cmd = getParsedArgs(args);
-        String inputDir = cmd.getOptionValue("i");
+        String inputAudioFile = cmd.getOptionValue("i");
         String outputDir = cmd.getOptionValue("o");
-        String transcriptDir = cmd.getOptionValue("t");
-        if (inputDir != null && outputDir != null) {
-            log.info("Processing with input dir {} and output dir {}", inputDir, outputDir);
-            TranscribeProcessor processor = injector.getInstance(TranscribeProcessor.class);
-            processor.process(inputDir, outputDir);
-            log.info("Processed input dir {} into output dir {}", inputDir, outputDir);
-            return;
-        }
-        if (transcriptDir != null) {
-            log.info("Will parse transcript dir {}", transcriptDir);
-            TranscriptionFormatter formatter = injector.getInstance(TranscriptionFormatter.class);
-            formatter.format(transcriptDir);
-            log.info("Did parse transcript dir {}", transcriptDir);
-            return;
-        }
-        throw new RuntimeException("Illegal options");
+        String documentTitle = cmd.getOptionValue("t");
+        String caseName = cmd.getOptionValue("c");
+        log.info("Processing with input file {} to {}", inputAudioFile, outputDir);
+        TranscriptProcessor processor = injector.getInstance(TranscriptProcessor.class);
+        processor.process(inputAudioFile, outputDir, documentTitle, caseName);
+        log.info("Processed input file {} to {}", inputAudioFile, outputDir);
     }
 }

@@ -1,4 +1,4 @@
-package transcribe;
+package transcribe.config;
 
 import java.util.List;
 

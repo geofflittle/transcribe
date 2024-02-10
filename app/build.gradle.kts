@@ -35,7 +35,7 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:2.0.12")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1")
-    implementation("com.itextpdf:itextpdf:5.5.13.3")
+    implementation("org.freemarker:freemarker:2.3.32")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
