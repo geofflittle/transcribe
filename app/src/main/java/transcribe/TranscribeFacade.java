@@ -11,6 +11,7 @@ import software.amazon.awssdk.services.transcribe.model.GetTranscriptionJobRespo
 import software.amazon.awssdk.services.transcribe.model.LanguageCode;
 import software.amazon.awssdk.services.transcribe.model.Media;
 import software.amazon.awssdk.services.transcribe.model.MediaFormat;
+import software.amazon.awssdk.services.transcribe.model.Settings;
 import software.amazon.awssdk.services.transcribe.model.StartTranscriptionJobRequest;
 import software.amazon.awssdk.services.transcribe.model.StartTranscriptionJobResponse;
 import software.amazon.awssdk.services.transcribe.model.TranscriptionJob;
@@ -22,13 +23,18 @@ public class TranscribeFacade {
 
     private final TranscribeClient transcribe;
 
-    public TranscriptionJob startTranscription(String jobName, String mediaFileUri, String outputBucketName) {
+    public TranscriptionJob startTranscription(String jobName, String outputBucketName,
+            String outputKey, String mediaFileUri) {
         StartTranscriptionJobRequest request = StartTranscriptionJobRequest.builder()
                 .transcriptionJobName(jobName)
-                .media(Media.builder().mediaFileUri(mediaFileUri).build())
                 .outputBucketName(outputBucketName)
+                .outputKey(outputKey)
+                .media(Media.builder().mediaFileUri(mediaFileUri).build())
                 .mediaFormat(MediaFormat.MP3)
                 .languageCode(LanguageCode.EN_US)
+                .settings(Settings.builder()
+                        .showAlternatives(false)
+                        .build())
                 .build();
         log.info("Will start transcription job for file {}", mediaFileUri);
         StartTranscriptionJobResponse response = transcribe.startTranscriptionJob(request);

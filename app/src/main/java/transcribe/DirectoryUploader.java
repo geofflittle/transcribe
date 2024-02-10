@@ -18,17 +18,16 @@ public class DirectoryUploader {
 
     private final S3Facade s3;
 
-    public List<String> upload(File directoryFile, String s3BucketName) {
-        log.info("Uploading " + directoryFile + " to " + s3BucketName);
-        if (!directoryFile.exists() || !directoryFile.isDirectory()) {
-            throw new RuntimeException("No directory with path " + directoryFile);
+    public List<String> upload(String s3Bucket, String s3KeyPrefix, File uploadDir) {
+        if (!uploadDir.exists() || !uploadDir.isDirectory()) {
+            throw new RuntimeException("No directory with path " + uploadDir);
         }
-        if (!s3.headBucket(s3BucketName)) {
-            log.info("No head bucket {}", s3BucketName);
-            s3.createBucket(s3BucketName);
+        if (!s3.headBucket(s3Bucket)) {
+            log.info("No head bucket {}", s3Bucket);
+            s3.createBucket(s3Bucket);
         }
-        List<String> s3Uris = Arrays.stream(directoryFile.listFiles())
-                .map(file -> s3.putObject(s3BucketName, file))
+        List<String> s3Uris = Arrays.stream(uploadDir.listFiles())
+                .map(file -> s3.putObject(s3Bucket, s3KeyPrefix + "/" + file.getName(), file))
                 .collect(Collectors.toList());
         return s3Uris;
     }

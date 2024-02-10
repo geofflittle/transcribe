@@ -16,10 +16,6 @@ repositories {
     mavenCentral()
 }
 
-// tasks.named<JavaExec>("run") {
-//     jvmArgs = listOf("-Djava.util.logging.config.file=/Users/geofflittle/code/transcribe/app/src/main/resources/logging.properties")
-// }
-
 dependencies {
     // Use JUnit Jupiter for testing.
     testImplementation(libs.junit.jupiter)
@@ -37,6 +33,9 @@ dependencies {
     implementation("com.google.inject:guice:7.0.0")
     implementation("org.slf4j:slf4j-api:2.0.12")
     implementation("org.slf4j:slf4j-simple:2.0.12")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1")
+    implementation("com.itextpdf:itextpdf:5.5.13.3")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

@@ -5,7 +5,6 @@ package transcribe;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -14,10 +13,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import com.google.inject.Binding;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -32,13 +29,19 @@ public class App {
         options.addOption(Option.builder("i")
                 .argName("inputDir")
                 .desc("Directory of files to upload")
-                .optionalArg(false)
+                .optionalArg(true)
                 .hasArg()
                 .build());
         options.addOption(Option.builder("o")
                 .argName("outputDir")
                 .desc("Directory of files to upload")
-                .optionalArg(false)
+                .optionalArg(true)
+                .hasArg()
+                .build());
+        options.addOption(Option.builder("t")
+                .argName("transcriptDir")
+                .desc("Directory of transcript .txt files")
+                .optionalArg(true)
                 .hasArg()
                 .build());
         CommandLineParser parser = new DefaultParser();
@@ -47,16 +50,24 @@ public class App {
 
     public static void main(String[] args) throws ParseException, URISyntaxException, IOException {
         Injector injector = Guice.createInjector(new AppModule());
-        Map<Key<?>, Binding<?>> bindings = injector.getAllBindings();
-        for (Map.Entry<Key<?>, Binding<?>> entry : bindings.entrySet()) {
-            System.out.println(entry.getKey() + " : " + entry.getValue());
-        }
         CommandLine cmd = getParsedArgs(args);
         String inputDir = cmd.getOptionValue("i");
         String outputDir = cmd.getOptionValue("o");
-        log.info("Processing with input dir {} and output dir {}", inputDir, outputDir);
-        TranscribeProcessor processor = injector.getInstance(TranscribeProcessor.class);
-        processor.process(inputDir, outputDir);
-        log.info("Processed input dir {} into output dir {}", inputDir, outputDir);
+        String transcriptDir = cmd.getOptionValue("t");
+        if (inputDir != null && outputDir != null) {
+            log.info("Processing with input dir {} and output dir {}", inputDir, outputDir);
+            TranscribeProcessor processor = injector.getInstance(TranscribeProcessor.class);
+            processor.process(inputDir, outputDir);
+            log.info("Processed input dir {} into output dir {}", inputDir, outputDir);
+            return;
+        }
+        if (transcriptDir != null) {
+            log.info("Will parse transcript dir {}", transcriptDir);
+            TranscriptionFormatter formatter = injector.getInstance(TranscriptionFormatter.class);
+            formatter.format(transcriptDir);
+            log.info("Did parse transcript dir {}", transcriptDir);
+            return;
+        }
+        throw new RuntimeException("Illegal options");
     }
 }
