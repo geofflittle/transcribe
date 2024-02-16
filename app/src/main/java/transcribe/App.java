@@ -3,30 +3,49 @@
  */
 package transcribe;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.ZoneId;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
+import freemarker.template.TemplateException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import transcribe.config.AppModule;
-import transcribe.services.TranscriptProcessor;
+import transcribe.services.CourtSmartZipTranscriber;
+import transcribe.services.PrereqEnsurer;
 
 // TODO: Get app to read logging.properties file
 @Slf4j
 public class App {
 
     @SneakyThrows
-    private static CommandLine getParsedArgs(String[] args) {
+    private static Pair<Options, CommandLine> getParsedArgs(String[] args) {
         Options options = new Options();
-        options.addOption(Option.builder("i")
-                .argName("inputAudioFile")
-                .desc("Input audio file to transcribe")
+        options.addOption(Option.builder("h")
+                .argName("help")
+                .desc("Help information")
+                .optionalArg(true)
+                .build());
+        options.addOption(Option.builder("z")
+                .argName("courtSmartZipPath")
+                .desc("CourtSmart zip file path")
+                .optionalArg(false)
+                .hasArg()
+                .build());
+        options.addOption(Option.builder("t")
+                .argName("zoneId")
+                .desc("The time zone of the audio in the CourtSmart zip")
                 .optionalArg(false)
                 .hasArg()
                 .build());
@@ -36,38 +55,32 @@ public class App {
                 .optionalArg(false)
                 .hasArg()
                 .build());
-        options.addOption(Option.builder("t")
-                .argName("documentTitle")
-                .desc("Output transcript document title")
-                .optionalArg(false)
-                .hasArg()
-                .build());
-        options.addOption(Option.builder("c")
-                .argName("caseName")
-                .desc("Output transcript case name")
-                .optionalArg(false)
-                .hasArg()
-                .build());
-        // options.addOption(Option.builder("t")
-        // .argName("transcriptDir")
-        // .desc("Directory of transcript .txt files")
-        // .optionalArg(true)
-        // .hasArg()
-        // .build());
         CommandLineParser parser = new DefaultParser();
-        return parser.parse(options, args);
+        return Pair.of(options, parser.parse(options, args));
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, InterruptedException, TemplateException {
         Injector injector = Guice.createInjector(new AppModule());
-        CommandLine cmd = getParsedArgs(args);
-        String inputAudioFile = cmd.getOptionValue("i");
-        String outputDir = cmd.getOptionValue("o");
-        String documentTitle = cmd.getOptionValue("t");
-        String caseName = cmd.getOptionValue("c");
-        log.info("Processing with input file {} to {}", inputAudioFile, outputDir);
-        TranscriptProcessor processor = injector.getInstance(TranscriptProcessor.class);
-        processor.process(inputAudioFile, outputDir, documentTitle, caseName);
-        log.info("Processed input file {} to {}", inputAudioFile, outputDir);
+        PrereqEnsurer ensurer = injector.getInstance(PrereqEnsurer.class);
+        ensurer.ensure().join();
+
+        Pair<Options, CommandLine> optsAndCmd = getParsedArgs(args);
+        CommandLine cmd = optsAndCmd.getRight();
+        if (cmd.hasOption("h")) {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("ant", optsAndCmd.getLeft());
+            return;
+        }
+        String courtSmartZipFileStr = cmd.getOptionValue("z");
+        String zoneIdStr = cmd.getOptionValue("t");
+        String outputDirStr = cmd.getOptionValue("o");
+
+        log.info("Processing with input file {}", courtSmartZipFileStr);
+        CourtSmartZipTranscriber transcriber = injector.getInstance(CourtSmartZipTranscriber.class);
+        // String documentTitle = "Document Title";
+        // String caseName = "Steven Krawatsky, et al. v. Rachel Avrunin, et al.";
+        // "America/New_York"
+        transcriber.transcribe(Path.of(courtSmartZipFileStr), ZoneId.of(zoneIdStr), Path.of(outputDirStr));
+        log.info("Processed input file {}", courtSmartZipFileStr);
     }
 }

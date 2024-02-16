@@ -29,13 +29,17 @@ dependencies {
     implementation(platform("software.amazon.awssdk:bom:2.21.1"))
     implementation("software.amazon.awssdk:s3")
     implementation("software.amazon.awssdk:transcribe")
+    implementation("software.amazon.awssdk:netty-nio-client")
     implementation("commons-cli:commons-cli:1.6.0")
     implementation("com.google.inject:guice:7.0.0")
     implementation("org.slf4j:slf4j-api:2.0.12")
     implementation("org.slf4j:slf4j-simple:2.0.12")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.16.1")
     implementation("org.freemarker:freemarker:2.3.32")
+    implementation("org.apache.commons:commons-compress:1.25.0")
+    implementation("org.apache.commons:commons-lang3:3.14.0")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

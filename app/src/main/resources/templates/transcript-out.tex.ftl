@@ -9,7 +9,7 @@
 \fancyhf{}
 \fancyhead[L]{${documentTitle}}
 \fancyhead[C]{}
-\fancyhead[R]{${caseName}}
+\fancyhead[R]{Case: ${caseName}}
 \fancyfoot[L]{${info}}
 \fancyfoot[C]{}
 \fancyfoot[R]{Page: \thepage\\${filename}}
@@ -23,5 +23,5 @@
 	\doublespacing
 	\large
 	\ttfamily
-	${body}
+    ${body}
 \end{document}

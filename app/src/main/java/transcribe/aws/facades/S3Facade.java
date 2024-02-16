@@ -1,6 +1,7 @@
 package transcribe.aws.facades;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 
 import com.google.inject.Inject;
 
@@ -9,9 +10,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.core.async.AsyncResponseTransformer;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
-import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
@@ -24,56 +25,65 @@ import transcribe.aws.model.S3ObjectMetadata;
 @RequiredArgsConstructor(onConstructor = @__(@Inject))
 public class S3Facade {
 
-    private final S3Client s3;
+    private final S3AsyncClient s3;
 
-    public String createBucket(String bucket) {
+    public CompletableFuture<String> createBucket(String bucket) {
         log.info("Will create bucket {}", bucket);
         CreateBucketRequest request = CreateBucketRequest.builder()
                 .bucket(bucket)
                 .build();
-        CreateBucketResponse response = s3.createBucket(request);
-        log.info("Did create bucket {}", bucket);
-        return response.location();
+        return s3.createBucket(request)
+                .thenApply(res -> {
+                    log.info("Did create bucket {}", bucket);
+                    return res.location();
+                });
     }
 
-    public boolean headBucket(String bucket) {
-        try {
-            log.info("Will head bucket {}", bucket);
-            HeadBucketRequest request = HeadBucketRequest.builder()
-                    .bucket(bucket)
-                    .build();
-            s3.headBucket(request);
-            log.info("Did head bucket {}", bucket);
-        } catch (Throwable t) {
-            log.info("Bucket is absent, {}", bucket);
-            return false;
-        }
-        log.info("Bucket is present, {}", bucket);
-        return true;
+    public CompletableFuture<Boolean> headBucket(String bucket) {
+        log.info("Will head bucket {}", bucket);
+        HeadBucketRequest request = HeadBucketRequest.builder()
+                .bucket(bucket)
+                .build();
+        return s3.headBucket(request)
+                .handle((res, err) -> {
+                    log.info("Did head bucket {}", bucket);
+                    if (err != null) {
+                        log.info("Bucket is absent, {}", bucket);
+                        return false;
+                    }
+                    log.info("Bucket is present, {}", bucket);
+                    return true;
+                });
     }
 
-    public S3ObjectMetadata putObject(String bucket, String key, File file) {
-        log.info("Will put obj {} to {}/{}", file, bucket, key);
+    public CompletableFuture<S3ObjectMetadata> putObject(String bucket, String key, Path path) {
+        log.info("Will put obj {} to {}/{}", path, bucket, key);
         PutObjectRequest request = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
                 .build();
-        s3.putObject(request, file.toPath());
-        return S3ObjectMetadata.builder()
-                .bucket(bucket)
-                .key(key)
-                .build();
+        return s3.putObject(request, path)
+                .thenApply(res -> {
+                    log.info("Did put obj {} to {}/{}", path, bucket, key);
+                    return S3ObjectMetadata.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .build();
+                });
     }
 
-    public ResponseInputStream<GetObjectResponse> getObject(String bucket, String key) {
+    public CompletableFuture<ResponseInputStream<GetObjectResponse>> getObject(String bucket, String key) {
         log.info("Will get stream {}/{}", bucket, key);
         GetObjectRequest request = GetObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
                 .build();
-        ResponseInputStream<GetObjectResponse> response = s3.getObject(request);
-        log.info("Did get stream {}/{}", bucket, key);
-        return response;
+        return s3.getObject(request,
+                AsyncResponseTransformer.toBlockingInputStream())
+                .thenApply(res -> {
+                    log.info("Did get stream {}/{}", bucket, key);
+                    return res;
+                });
     }
 
 }

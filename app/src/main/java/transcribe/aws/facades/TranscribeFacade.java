@@ -1,19 +1,19 @@
 package transcribe.aws.facades;
 
+import java.util.concurrent.CompletableFuture;
+
 import com.google.inject.Inject;
 
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.services.transcribe.TranscribeClient;
+import software.amazon.awssdk.services.transcribe.TranscribeAsyncClient;
 import software.amazon.awssdk.services.transcribe.model.GetTranscriptionJobRequest;
-import software.amazon.awssdk.services.transcribe.model.GetTranscriptionJobResponse;
 import software.amazon.awssdk.services.transcribe.model.LanguageCode;
 import software.amazon.awssdk.services.transcribe.model.Media;
 import software.amazon.awssdk.services.transcribe.model.MediaFormat;
 import software.amazon.awssdk.services.transcribe.model.Settings;
 import software.amazon.awssdk.services.transcribe.model.StartTranscriptionJobRequest;
-import software.amazon.awssdk.services.transcribe.model.StartTranscriptionJobResponse;
 import software.amazon.awssdk.services.transcribe.model.TranscriptionJob;
 import transcribe.aws.model.S3ObjectMetadata;
 
@@ -22,35 +22,40 @@ import transcribe.aws.model.S3ObjectMetadata;
 @RequiredArgsConstructor(onConstructor = @__(@Inject))
 public class TranscribeFacade {
 
-    private final TranscribeClient transcribe;
+    private final TranscribeAsyncClient transcribe;
 
-    public TranscriptionJob startTranscription(String jobName, String outputBucketName,
-            String outputKey, S3ObjectMetadata objectMetadata) {
+    public CompletableFuture<TranscriptionJob> startTranscription(String jobName, S3ObjectMetadata inputObjectMeta,
+            S3ObjectMetadata outpuObjectMeta) {
         StartTranscriptionJobRequest request = StartTranscriptionJobRequest.builder()
                 .transcriptionJobName(jobName)
-                .outputBucketName(outputBucketName)
-                .outputKey(outputKey)
-                .media(Media.builder().mediaFileUri(objectMetadata.toS3URIString()).build())
+                .outputBucketName(outpuObjectMeta.getBucket())
+                .outputKey(outpuObjectMeta.getKey())
+                .media(Media.builder().mediaFileUri(inputObjectMeta.toS3Uri()).build())
                 .mediaFormat(MediaFormat.MP3)
                 .languageCode(LanguageCode.EN_US)
                 .settings(Settings.builder()
                         .showAlternatives(false)
                         .build())
                 .build();
-        log.info("Will start transcription job for file {}", objectMetadata.toS3URIString());
-        StartTranscriptionJobResponse response = transcribe.startTranscriptionJob(request);
-        log.info("Did start transcription job {}", response.transcriptionJob().transcriptionJobName());
-        return response.transcriptionJob();
+        log.info("Will start transcription job for s3 file {}", inputObjectMeta.toS3Uri());
+        return transcribe.startTranscriptionJob(request)
+                .thenApply(res -> {
+                    TranscriptionJob job = res.transcriptionJob();
+                    log.info("Did start transcription job {}", job.transcriptionJobName());
+                    return job;
+                });
     }
 
-    public TranscriptionJob getTranscriptionJob(String jobName) {
+    public CompletableFuture<TranscriptionJob> getTranscriptionJob(String jobName) {
         GetTranscriptionJobRequest request = GetTranscriptionJobRequest.builder()
                 .transcriptionJobName(jobName)
                 .build();
         log.info("Will get transcription job {}", jobName);
-        GetTranscriptionJobResponse response = transcribe.getTranscriptionJob(request);
-        log.info("Did get transcription job {}", response.transcriptionJob());
-        return response.transcriptionJob();
+        return transcribe.getTranscriptionJob(request)
+                .thenApply(res -> {
+                    log.info("Did get transcription job {}", res.transcriptionJob());
+                    return res.transcriptionJob();
+                });
     }
 
 }
