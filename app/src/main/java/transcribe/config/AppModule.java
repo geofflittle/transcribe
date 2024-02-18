@@ -1,6 +1,7 @@
 package transcribe.config;
 
 import java.time.Duration;
+import java.util.Map;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -15,6 +16,9 @@ import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.transcribe.TranscribeAsyncClient;
+import transcribe.Command;
+import transcribe.commands.FormatS3TranscriptCommand;
+import transcribe.commands.TranscribeCourtSmartAudioCommand;
 
 public class AppModule extends AbstractModule {
 
@@ -68,6 +72,15 @@ public class AppModule extends AbstractModule {
                 .overrideConfiguration(config)
                 .httpClient(httpClient)
                 .build();
+    }
+
+    @Provides
+    @Singleton
+    public Map<String, Command> commandMap(FormatS3TranscriptCommand formatS3Transcript,
+            TranscribeCourtSmartAudioCommand transcribeCourtSmartAudio) {
+        return Map.ofEntries(
+                Map.entry(formatS3Transcript.getCommandOption().getOpt(), formatS3Transcript),
+                Map.entry(transcribeCourtSmartAudio.getCommandOption().getOpt(), transcribeCourtSmartAudio));
     }
 
 }

@@ -1,7 +1,5 @@
 package transcribe.services;
 
-import java.util.concurrent.CompletableFuture;
-
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -23,14 +21,13 @@ public class PrereqEnsurer {
     @NonNull
     private final S3Facade s3;
 
-    public CompletableFuture<Boolean> ensure() {
-        return s3.headBucket(bucket)
-                .thenCompose(b -> {
-                    if (b) {
-                        return CompletableFuture.completedFuture(Boolean.TRUE);
-                    }
-                    return s3.createBucket(bucket)
-                            .thenApply(s -> true);
-                });
+    public boolean ensure() {
+        if (s3.headBucket(bucket).join()) {
+            log.info("Bucket {} is present", bucket);
+            return true;
+        }
+        log.info("Bucket {} is absent", bucket);
+        s3.createBucket(bucket).join();
+        return true;
     }
 }
