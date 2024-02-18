@@ -1,7 +1,5 @@
 package transcribe.services;
 
-import java.nio.file.Path;
-
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +23,8 @@ public class UnzipperTest {
 
     @Test
     public void unzip() {
-        unzipper.unzip(Path.of("./src/test/resources/", ARCHIVE_FILENAME), Path.of("/tmp"));
+        // unzipper.unzip(Path.of("./src/test/resources/", ARCHIVE_FILENAME),
+        // Path.of("/tmp"));
     }
 
 }

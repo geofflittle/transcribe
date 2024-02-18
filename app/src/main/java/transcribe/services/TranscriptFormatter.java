@@ -67,10 +67,10 @@ public class TranscriptFormatter {
         pb.redirectErrorStream(true);
         Process process = pb.start();
         int exitCode = process.waitFor();
-        String pdfLatexOutput = new String(process.getInputStream().readAllBytes());
-        if (!pdfLatexOutput.isBlank()) {
-            log.info("pdflatex process output: {}", pdfLatexOutput);
-        }
+        // String pdfLatexOutput = new String(process.getInputStream().readAllBytes());
+        // if (!pdfLatexOutput.isBlank()) {
+        // log.info("pdflatex process output: {}", pdfLatexOutput);
+        // }
         log.info("pdflatex process completed with exit code {}", exitCode);
         return outputDir.resolve(latexFilename);
     }
