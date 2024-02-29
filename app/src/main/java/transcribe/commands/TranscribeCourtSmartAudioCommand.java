@@ -60,9 +60,9 @@ public class TranscribeCourtSmartAudioCommand implements Command {
     private final CourtSmartZipTranscriber transcriber;
 
     public void run(CommandLine cmd) {
-        String courtSmartZipFileStr = cmd.getOptionValue(ZIP_SHORT);
-        String zoneIdStr = cmd.getOptionValue(ZONE_SHORT);
-        String outputDirStr = cmd.getOptionValue(OUTPUT_SHORT);
+        var courtSmartZipFileStr = cmd.getOptionValue(ZIP_SHORT);
+        var zoneIdStr = cmd.getOptionValue(ZONE_SHORT);
+        var outputDirStr = cmd.getOptionValue(OUTPUT_SHORT);
 
         log.info("Will process CourtSmart zip {} with zone id {} and output dir {}", courtSmartZipFileStr, zoneIdStr,
                 outputDirStr);

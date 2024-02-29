@@ -69,11 +69,11 @@ public class FormatS3TranscriptCommand implements Command {
     private final S3TranscriptFormatter formatter;
 
     public void run(CommandLine cmd) {
-        String s3Bucket = cmd.getOptionValue(BUCKET_SHORT);
-        String s3Key = cmd.getOptionValue(KEY_SHORT);
-        String outputDirStr = cmd.getOptionValue(OUTPUT_SHORT);
-        String transcriptDocTitle = cmd.getOptionValue(TITLE_SHORT);
-        String caseName = cmd.getOptionValue(CASE_SHORT);
+        var s3Bucket = cmd.getOptionValue(BUCKET_SHORT);
+        var s3Key = cmd.getOptionValue(KEY_SHORT);
+        var outputDirStr = cmd.getOptionValue(OUTPUT_SHORT);
+        var transcriptDocTitle = cmd.getOptionValue(TITLE_SHORT);
+        var caseName = cmd.getOptionValue(CASE_SHORT);
 
         log.info("Will process with s3 bucket {}, s3 key {}, output dir {}, transcript doc title {}, and case name {}",
                 s3Bucket, s3Key, outputDirStr, transcriptDocTitle, caseName);
