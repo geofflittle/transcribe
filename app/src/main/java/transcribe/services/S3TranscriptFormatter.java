@@ -43,7 +43,7 @@ public class S3TranscriptFormatter {
 
     public void format(String outputDirStr, String transcriptDocTitle, String caseName, String s3Bucket, String s3Key) {
         // We assume that the transcript s3 key contains the audio file name
-        String audioFilename = s3Key.substring(s3Key.lastIndexOf("/") + 1).replace("-transcript.json", "");
+        var audioFilename = s3Key.substring(s3Key.lastIndexOf("/") + 1).replace("-transcript.json", "");
         processRequest(S3TranscriptFormatRequest.builder()
                 .transcriptS3ObjectMeta(S3ObjectMetadata.builder()
                         .bucket(s3Bucket)

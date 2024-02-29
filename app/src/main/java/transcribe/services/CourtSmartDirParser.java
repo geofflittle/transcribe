@@ -6,10 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.inject.Inject;
@@ -35,36 +31,34 @@ public class CourtSmartDirParser {
         return mapper.readValue(sessionsXml.toFile(), Store.class);
     }
 
+    public record StoreAndOggs(Store store, Map<String, Path> oggs) {
+    }
+
     @SneakyThrows
-    private Pair<Store, Map<String, Path>> getStoreAndOggs(Path courtSmartDir) {
-        try (Stream<Path> paths = Files.walk(courtSmartDir)) {
-            MutablePair<Store, Map<String, Path>> result = paths.reduce(
-                    new MutablePair<>(null, new HashMap<>()),
+    private StoreAndOggs getStoreAndOggs(Path courtSmartDir) {
+        try (var paths = Files.walk(courtSmartDir)) {
+            var result = paths.reduce(
+                    new StoreAndOggs(null, new HashMap<>()),
                     (acc, path) -> {
                         if (path.toString().endsWith(".csx")) {
-                            Store store = parseCourtSmartSessions(path);
-                            acc.setLeft(store);
-                        } else if (path.toString().endsWith(".ogg")) {
-                            acc.getRight().put(path.getFileName().toString(), path);
+                            var store = parseCourtSmartSessions(path);
+                            return new StoreAndOggs(store, acc.oggs());
+                        }
+                        if (path.toString().endsWith(".ogg")) {
+                            acc.oggs().put(path.getFileName().toString(), path);
                         }
                         return acc;
                     },
-                    (acc1, acc2) -> {
-                        if (acc2.getLeft() != null) {
-                            acc1.setLeft(acc2.getLeft());
-                        }
-                        acc1.getRight().putAll(acc2.getRight());
-                        return acc1;
-                    });
-            return Pair.of(result.getLeft(), result.getRight());
+                    (acc1, acc2) -> acc1);
+            return new StoreAndOggs(result.store(), result.oggs());
         }
     }
 
     public List<CourtSmartSessionDetails> parse(Path courtSmartDir) {
         log.info("Will get store and oggs for dir {}", courtSmartDir);
-        Pair<Store, Map<String, Path>> storeAndOggs = getStoreAndOggs(courtSmartDir);
-        return storeAndOggs.getLeft().getSessions().stream()
-                .map(s -> CourtSmartSessionDetails.fromCourtSmartSession(storeAndOggs.getRight(), s))
+        var storeAndOggs = getStoreAndOggs(courtSmartDir);
+        return storeAndOggs.store().getSessions().stream()
+                .map(s -> CourtSmartSessionDetails.fromCourtSmartSession(storeAndOggs.oggs(), s))
                 .collect(Collectors.toList());
     }
 

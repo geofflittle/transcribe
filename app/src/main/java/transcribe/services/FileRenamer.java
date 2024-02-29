@@ -16,10 +16,10 @@ public class FileRenamer {
 
     @SneakyThrows
     public Path rename(Path oldFile, LocalDateTime newFilePrefix) {
-        String formattedInstant = DATE_TIME_FORMAT.format(newFilePrefix);
-        String newFilename = String.format("%s_%s", formattedInstant,
+        var formattedInstant = DATE_TIME_FORMAT.format(newFilePrefix);
+        var newFilename = String.format("%s_%s", formattedInstant,
                 oldFile.getFileName());
-        Path newFile = oldFile.resolveSibling(newFilename);
+        var newFile = oldFile.resolveSibling(newFilename);
         log.info("Will replace old file {} with new file {}", oldFile, newFile);
         Files.move(oldFile, newFile, StandardCopyOption.REPLACE_EXISTING);
         log.info("Did replace old file {} with new file {}", oldFile, newFile);

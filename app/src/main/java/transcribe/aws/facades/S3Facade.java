@@ -29,7 +29,7 @@ public class S3Facade {
 
     public CompletableFuture<String> createBucket(String bucket) {
         log.info("Will create bucket {}", bucket);
-        CreateBucketRequest request = CreateBucketRequest.builder()
+        var request = CreateBucketRequest.builder()
                 .bucket(bucket)
                 .build();
         return s3.createBucket(request)
@@ -41,7 +41,7 @@ public class S3Facade {
 
     public CompletableFuture<Boolean> headBucket(String bucket) {
         log.info("Will head bucket {}", bucket);
-        HeadBucketRequest request = HeadBucketRequest.builder()
+        var request = HeadBucketRequest.builder()
                 .bucket(bucket)
                 .build();
         return s3.headBucket(request)
@@ -58,7 +58,7 @@ public class S3Facade {
 
     public CompletableFuture<S3ObjectMetadata> putObject(String bucket, String key, Path path) {
         log.info("Will put obj {} to {}/{}", path, bucket, key);
-        PutObjectRequest request = PutObjectRequest.builder()
+        var request = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
                 .build();
@@ -74,7 +74,7 @@ public class S3Facade {
 
     public CompletableFuture<ResponseInputStream<GetObjectResponse>> getObject(String bucket, String key) {
         log.info("Will get stream {}/{}", bucket, key);
-        GetObjectRequest request = GetObjectRequest.builder()
+        var request = GetObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
                 .build();

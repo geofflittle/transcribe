@@ -43,10 +43,10 @@ public class S3TranscriptionStarter {
      */
     public CompletableFuture<TranscriptionJob> start(Path inputAudio) {
         log.info("Will start transcript of {}", inputAudio);
-        String jobName = String.format("%s_%s", LocalDate.now().format(DATE_FORMATTER), UUID.randomUUID().toString());
-        String audioS3Key = String.format("%s/%s", jobName, inputAudio.getFileName());
-        String transcriptS3Key = audioS3Key + "-transcript.json";
-        S3ObjectMetadata transcriptS3Meta = S3ObjectMetadata.builder()
+        var jobName = String.format("%s_%s", LocalDate.now().format(DATE_FORMATTER), UUID.randomUUID().toString());
+        var audioS3Key = String.format("%s/%s", jobName, inputAudio.getFileName());
+        var transcriptS3Key = audioS3Key + "-transcript.json";
+        var transcriptS3Meta = S3ObjectMetadata.builder()
                 .bucket(bucket)
                 .key(transcriptS3Key)
                 .build();

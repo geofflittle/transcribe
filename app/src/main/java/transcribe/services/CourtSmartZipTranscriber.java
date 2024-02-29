@@ -69,7 +69,7 @@ public class CourtSmartZipTranscriber {
 
     private CompletableFuture<Optional<CourtSmartTranscribeResponse>> processRequest(
             CourtSmartTranscribeRequest request) {
-        Path inputAudio = renamer.rename(request.getAudioFile(), request.getRecordingStart());
+        var inputAudio = renamer.rename(request.getAudioFile(), request.getRecordingStart());
         return starter.start(inputAudio)
                 .thenCompose(job -> poller.pollS3Object(job.transcriptionJobName()))
                 .thenCompose(om -> downloader.download(om))
@@ -88,11 +88,11 @@ public class CourtSmartZipTranscriber {
     }
 
     public void transcribe(Path courtSmartZip, ZoneId fileZoneId, Path outputDir) {
-        Path courtSmartDir = unzipper.unzip(courtSmartZip, Path.of("/tmp"));
-        List<CourtSmartSessionDetails> sessions = parser.parse(courtSmartDir);
-        List<CourtSmartTranscribeRequest> transcribeRequests = createTranscribeRequests(outputDir, fileZoneId,
+        var courtSmartDir = unzipper.unzip(courtSmartZip, Path.of("/tmp"));
+        var sessions = parser.parse(courtSmartDir);
+        var transcribeRequests = createTranscribeRequests(outputDir, fileZoneId,
                 sessions);
-        List<CompletableFuture<Optional<CourtSmartTranscribeResponse>>> transcribeResponseFutures = transcribeRequests
+        var transcribeResponseFutures = transcribeRequests
                 .parallelStream()
                 .map(this::processRequest)
                 .collect(Collectors.toList());

@@ -9,6 +9,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.transcribe.TranscribeAsyncClient;
 import software.amazon.awssdk.services.transcribe.model.GetTranscriptionJobRequest;
+import software.amazon.awssdk.services.transcribe.model.GetTranscriptionJobResponse;
 import software.amazon.awssdk.services.transcribe.model.LanguageCode;
 import software.amazon.awssdk.services.transcribe.model.Media;
 import software.amazon.awssdk.services.transcribe.model.MediaFormat;
@@ -26,7 +27,7 @@ public class TranscribeFacade {
 
     public CompletableFuture<TranscriptionJob> startTranscription(String jobName, S3ObjectMetadata inputObjectMeta,
             S3ObjectMetadata outpuObjectMeta) {
-        StartTranscriptionJobRequest request = StartTranscriptionJobRequest.builder()
+        var request = StartTranscriptionJobRequest.builder()
                 .transcriptionJobName(jobName)
                 .outputBucketName(outpuObjectMeta.getBucket())
                 .outputKey(outpuObjectMeta.getKey())
@@ -47,15 +48,12 @@ public class TranscribeFacade {
     }
 
     public CompletableFuture<TranscriptionJob> getTranscriptionJob(String jobName) {
-        GetTranscriptionJobRequest request = GetTranscriptionJobRequest.builder()
-                .transcriptionJobName(jobName)
-                .build();
         log.info("Will get transcription job {}", jobName);
-        return transcribe.getTranscriptionJob(request)
-                .thenApply(res -> {
-                    log.info("Did get transcription job {}", res.transcriptionJob());
-                    return res.transcriptionJob();
-                });
+        return CompletableFuture.completedFuture(GetTranscriptionJobRequest.builder()
+                .transcriptionJobName(jobName)
+                .build())
+                .thenCompose(transcribe::getTranscriptionJob)
+                .thenApply(GetTranscriptionJobResponse::transcriptionJob);
     }
 
 }

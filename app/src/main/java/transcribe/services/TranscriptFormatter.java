@@ -9,7 +9,6 @@ import java.nio.file.Paths;
 import com.google.inject.Inject;
 
 import freemarker.template.Configuration;
-import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -28,14 +27,14 @@ public class TranscriptFormatter {
     @SneakyThrows
     private String processLatexTemplate(String docTitle, String caseName, String audioFilename,
             String transcriptContent) {
-        Configuration cfg = new Configuration(Configuration.VERSION_2_3_31);
+        var cfg = new Configuration(Configuration.VERSION_2_3_31);
         cfg.setDirectoryForTemplateLoading(TEMPLATE_DIR);
         cfg.setDefaultEncoding("UTF-8");
         cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
         cfg.setLogTemplateExceptions(true);
         cfg.setWrapUncheckedExceptions(true);
-        Template template = cfg.getTemplate(TEMPLATE_FILENAME);
-        StringWriter out = new StringWriter();
+        var template = cfg.getTemplate(TEMPLATE_FILENAME);
+        var out = new StringWriter();
         log.info("Will process transcript template for {}", audioFilename);
         template.process(TranscriptModel.builder()
                 .documentTitle(docTitle)
@@ -50,9 +49,9 @@ public class TranscriptFormatter {
 
     @SneakyThrows
     private String writeLatexFile(String audioFilename, String docTitle, String caseName, String content) {
-        String latexFilename = String.format("/tmp/%s.tex", audioFilename);
-        String latexContent = processLatexTemplate(docTitle, caseName, audioFilename, content);
-        Path filePath = Paths.get(latexFilename);
+        var latexFilename = String.format("/tmp/%s.tex", audioFilename);
+        var latexContent = processLatexTemplate(docTitle, caseName, audioFilename, content);
+        var filePath = Paths.get(latexFilename);
         log.info("Will write transcript of {} to LaTeX file {}", audioFilename, latexFilename);
         Files.writeString(filePath, latexContent);
         log.info("Did write transcript of {} to LaTeX file {}", audioFilename, latexFilename);
@@ -62,11 +61,11 @@ public class TranscriptFormatter {
     @SneakyThrows
     private Path compileLatexToPDF(Path outputDir, String latexFilename) {
         Files.createDirectories(outputDir);
-        ProcessBuilder pb = new ProcessBuilder("pdflatex", "-output-directory", outputDir.toString(),
+        var pb = new ProcessBuilder("pdflatex", "-output-directory", outputDir.toString(),
                 "-interaction", "nonstopmode", latexFilename);
         pb.redirectErrorStream(true);
-        Process process = pb.start();
-        int exitCode = process.waitFor();
+        var process = pb.start();
+        var exitCode = process.waitFor();
         // String pdfLatexOutput = new String(process.getInputStream().readAllBytes());
         // if (!pdfLatexOutput.isBlank()) {
         // log.info("pdflatex process output: {}", pdfLatexOutput);
@@ -77,7 +76,7 @@ public class TranscriptFormatter {
 
     public Path format(Path outputDir, String docTitle, String caseName,
             String audioFilename, String transcriptContent) {
-        String outputLatexFilename = writeLatexFile(audioFilename, docTitle, caseName,
+        var outputLatexFilename = writeLatexFile(audioFilename, docTitle, caseName,
                 transcriptContent);
         return compileLatexToPDF(outputDir, outputLatexFilename);
     }
